@@ -1,8 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include <GLFW/glfw3.h>
 #include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 enum GameState 
 {
@@ -20,8 +20,8 @@ public:
 	Game(unsigned int height, unsigned int width);
 	~Game();
 	void Init();
-	void ProcessInput();
-	void Update();
+	void ProcessInput(float deltaTime);
+	void Update(float deltaTime);
 	void Render();
 };
 #endif // !
