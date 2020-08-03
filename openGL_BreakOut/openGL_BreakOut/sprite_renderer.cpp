@@ -43,7 +43,7 @@ void SpriteRenderer::DrawSprite(Texture2D &texture, vec2 position, vec2 size, fl
 {
     this->shader.Use();
     mat4 model = mat4(1.0f);
-    model = glm::translate(model, vec3(position, 0.0f);
+    model = glm::translate(model, vec3(position, 0.0f));
 
     model = translate(model, vec3(0.5f * size.x, 0.5f * size.y, 0.0f));
     model = glm::rotate(model, radians(rotate), vec3(0.0f, 0.0f, 1.0f));
