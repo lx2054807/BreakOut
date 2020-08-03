@@ -39,7 +39,7 @@ void Shader::Compile(const char* vertexSource, const char* fragmentSource, const
 }
 
 Shader &Shader::Use() {
-	glUseProgram(ID);
+	glUseProgram(this->ID);
 	return *this;
 }
 
