@@ -84,7 +84,7 @@ Shader ResourceManager::loadShaderFromFile(const char* vShaderFile, const char* 
 	const char* gShaderCode = geometryCode.c_str();
 
 	Shader shader;
-	shader.Compile(vShaderCode, fShaderCode, gShaderCode != nullptr ? gShaderCode : nullptr);
+	shader.Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
 	return shader;
 }
 
@@ -98,7 +98,9 @@ Texture2D ResourceManager::loadTextureFromFile(const char* file, bool alpha)
 	}
 	int width, height, nrChannels;
 	unsigned char* data = stbi_load(file, &width, &height, &nrChannels, 0);
-	texture.Generate(width, height, data);
-	stbi_image_free(data);
+	if (data) {
+		texture.Generate(width, height, data);
+		stbi_image_free(data);
+	}
 	return texture;
 }
