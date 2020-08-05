@@ -49,7 +49,7 @@ void GameLevel::init(vector<vector<unsigned int>> tileData, unsigned int levelWi
 {
 	unsigned int height = tileData.size();
 	unsigned int width = tileData[0].size();
-	float unit_width = levelWidth / width, unit_height = levelHeight / height;
+	float unit_width = levelWidth / static_cast<float>(width), unit_height = levelHeight / static_cast<float>(height);
 	for (unsigned int y = 0; y < height; ++y) 
 	{
 		for (unsigned int x = 0; x < width; ++x) 
@@ -74,7 +74,7 @@ void GameLevel::init(vector<vector<unsigned int>> tileData, unsigned int levelWi
 					color = vec3(0.8f, 0.8f, 0.4f);
 				else if (data == 5)
 					color = vec3(1.0f, 0.5f, 0.0f);
-				vec2 pos(unit_width * x, unit_height * x);
+				vec2 pos(unit_width * x, unit_height * y);
 				vec2 size(unit_width, unit_height);
 				GameObject obj(pos, size, ResourceManager::GetTexture("block"), color);
 				this->Bricks.push_back(obj);
