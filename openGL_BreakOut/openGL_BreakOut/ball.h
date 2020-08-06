@@ -1,9 +1,12 @@
 #pragma once
-#ifndef BALL_H
-#define BALL_H
+#ifndef BALLOBJECT_H
+#define BALLOBJECT_H
 #include "gameobject.h"
+#include "texture.h"
+#include <glm/glm/glm.hpp>
+#include <glad/glad.h>
 
-class  BallObject:GameObject
+class  BallObject:public GameObject
 {
 public:
 	float Radius;
@@ -15,4 +18,4 @@ public:
 	void Reset(vec2 pos, vec2 velocity);
 };
 
-#endif // !BALL_H
+#endif // !BALLOBJECT_H

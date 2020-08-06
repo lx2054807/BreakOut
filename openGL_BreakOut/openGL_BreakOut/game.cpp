@@ -1,12 +1,17 @@
 #include "game.h"
 #include "sprite_renderer.h"
 #include "resource_manager.h"
-
+#include "ball.h"
+#include "gameobject.h"
 SpriteRenderer *spriteRenderer;
 
 const vec2 PLAYER_SIZE(100.0f, 20.0f);
 const float PLAYER_VELOCITY(500.0f);
 GameObject *Player;
+BallObject *Ball;
+
+const float BALL_RADIUS = 12.5f;
+const vec2 BALL_VELOCITY(100.0f, -300.0f);
 
 Game::Game(unsigned int height, unsigned int width)
 	:State(GAME_ACTIVE), Keys(), Width(width), Height(height)
@@ -52,6 +57,9 @@ void Game::Init()
 	vec2 playerPos = vec2(this->Width / 2.0f - PLAYER_SIZE.x / 2.0f,
 		this->Height - PLAYER_SIZE.y);
 	Player = new GameObject(playerPos, PLAYER_SIZE, ResourceManager::GetTexture("paddle"));
+	// init ball
+	vec2 ballPos = playerPos + vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -BALL_RADIUS * 2.0f);
+	Ball = new BallObject(ballPos, BALL_RADIUS, BALL_VELOCITY, ResourceManager::GetTexture("awesomeface"));
 }
 
 void Game::ProcessInput(float deltaTime)
@@ -63,6 +71,11 @@ void Game::ProcessInput(float deltaTime)
 			if (Player->Position.x >= 0.0f)
 			{
 				Player->Position.x -= velocity;
+				if (Ball->Stuck) 
+				{
+					Ball->Position.x -= velocity;
+				}
+					
 			}
 		}
 		if (this->Keys[GLFW_KEY_D] || this->Keys[GLFW_KEY_RIGHT])
@@ -70,13 +83,20 @@ void Game::ProcessInput(float deltaTime)
 			if (Player->Position.x <= this->Width - Player->Size.x)
 			{
 				Player->Position.x += velocity;
+				if (Ball->Stuck) 
+				{
+					Ball->Position.x += velocity;
+				}
 			}
 		}
+		if (this->Keys[GLFW_KEY_SPACE])
+			Ball->Stuck = false;
 	}
 }
 
 void Game::Update(float deltaTime)
 {
+	Ball->Move(deltaTime, this->Width);
 }
 
 void Game::Render()
@@ -88,6 +108,7 @@ void Game::Render()
 			vec2(0.0f), vec2(this->Width, this->Height), 0.0f);
 		this->Levels[this->Level].Draw(*spriteRenderer);
 		Player->Draw(*spriteRenderer);
+		Ball->Draw(*spriteRenderer);
 	}
 }								  
 														  
