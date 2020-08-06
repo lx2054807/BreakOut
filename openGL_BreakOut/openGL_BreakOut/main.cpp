@@ -11,6 +11,7 @@ const unsigned int SCREEN_HEIGHT = 600;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, int button, int action, int mode);
 
 Game BreakOut(SCREEN_HEIGHT, SCREEN_WIDTH);
 
@@ -36,6 +37,7 @@ int main()
 
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetMouseButtonCallback(window, mouse_callback);
 
 	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	glEnable(GL_BLEND);
@@ -76,6 +78,15 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	{
 		glfwSetWindowShouldClose(window, true);
 	}
+
+	if (key == GLFW_KEY_ENTER) 
+	{
+		if (action == GLFW_PRESS && BreakOut.State == GAME_MENU)
+			BreakOut.State = GAME_ACTIVE;
+		else if (action == GLFW_PRESS && BreakOut.State == GAME_ACTIVE)
+			BreakOut.State = GAME_MENU;
+	}
+
 	if (key >= 0 && key < 1024) 
 	{
 		if (action == GLFW_PRESS) 
@@ -86,6 +97,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		{
 			BreakOut.Keys[key] = false;
 		}
+	}
+}
+
+void mouse_callback(GLFWwindow* window, int button, int action, int mode) 
+{
+	if (button == GLFW_MOUSE_BUTTON_LEFT)
+	{
+		if (action == GLFW_PRESS){}
 	}
 }
 

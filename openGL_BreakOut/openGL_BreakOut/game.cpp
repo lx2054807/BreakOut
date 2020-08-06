@@ -56,19 +56,21 @@ void Game::Init()
 
 void Game::ProcessInput(float deltaTime)
 {
-	float velocity = PLAYER_VELOCITY * deltaTime;
-	if (this->Keys[GLFW_KEY_A] || this->Keys[GLFW_KEY_LEFT]) 
-	{
-		if (Player->Position.x >= 0.0f) 
+	if (this->State == GAME_ACTIVE) {
+		float velocity = PLAYER_VELOCITY * deltaTime;
+		if (this->Keys[GLFW_KEY_A] || this->Keys[GLFW_KEY_LEFT])
 		{
-			Player->Position.x -= velocity;
+			if (Player->Position.x >= 0.0f)
+			{
+				Player->Position.x -= velocity;
+			}
 		}
-	}
-	if (this->Keys[GLFW_KEY_D] || this->Keys[GLFW_KEY_RIGHT]) 
-	{
-		if (Player->Position.x <= this->Width - Player->Size.x) 
+		if (this->Keys[GLFW_KEY_D] || this->Keys[GLFW_KEY_RIGHT])
 		{
-			Player->Position.x += velocity;
+			if (Player->Position.x <= this->Width - Player->Size.x)
+			{
+				Player->Position.x += velocity;
+			}
 		}
 	}
 }
@@ -79,11 +81,13 @@ void Game::Update(float deltaTime)
 
 void Game::Render()
 {
-	Texture2D myTexture;
-	myTexture = ResourceManager::GetTexture("background");
-	spriteRenderer->DrawSprite(myTexture, 
-		vec2(0.0f), vec2(this->Width, this->Height),0.0f);
-	this->Levels[this->Level].Draw(*spriteRenderer);
-	Player->Draw(*spriteRenderer);
+	if (this->State == GAME_ACTIVE) {
+		Texture2D myTexture;
+		myTexture = ResourceManager::GetTexture("background");
+		spriteRenderer->DrawSprite(myTexture,
+			vec2(0.0f), vec2(this->Width, this->Height), 0.0f);
+		this->Levels[this->Level].Draw(*spriteRenderer);
+		Player->Draw(*spriteRenderer);
+	}
 }								  
 														  
