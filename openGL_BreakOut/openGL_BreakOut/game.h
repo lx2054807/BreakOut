@@ -28,5 +28,7 @@ public:
 	void Update(float deltaTime);
 	void Render();
 	void DoCollisions();
+	void ResetPlayer();
+	void ResetLevel();
 };
 #endif // !

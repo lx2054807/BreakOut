@@ -37,6 +37,12 @@ void GameLevel::Draw(SpriteRenderer& renderer)
 	}
 }
 
+void GameLevel::Reset()
+{
+	for (GameObject& tile : this->Bricks)
+		tile.Destroyed = false;
+}
+
 bool GameLevel::IsCompleted() 
 {
 	for (GameObject& tile : this->Bricks)

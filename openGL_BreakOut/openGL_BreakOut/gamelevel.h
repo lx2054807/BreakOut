@@ -17,6 +17,7 @@ public:
 	void Load(const char* file, unsigned int levelWidth, unsigned int levelHeight);
 	void Draw(SpriteRenderer& renderer);
 	bool IsCompleted();
+	void Reset();
 private:
 	void init(vector<vector<unsigned int>> tileData, unsigned int levelWidth, unsigned int levelHeight);
 };

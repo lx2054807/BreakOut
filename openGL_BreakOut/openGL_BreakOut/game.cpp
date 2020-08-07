@@ -5,6 +5,15 @@
 #include "gameobject.h"
 SpriteRenderer *spriteRenderer;
 
+enum Direction
+{
+	UP,
+	RIGHT,
+	DOWN,
+	LEFT
+};
+typedef std::tuple<bool, Direction, vec2> Collision;
+
 const vec2 PLAYER_SIZE(100.0f, 20.0f);
 const float PLAYER_VELOCITY(500.0f);
 GameObject *Player;
@@ -62,16 +71,40 @@ void Game::Init()
 	Ball = new BallObject(ballPos, BALL_RADIUS, BALL_VELOCITY, ResourceManager::GetTexture("awesomeface"));
 }
 
-bool CheckCollision(GameObject& one, GameObject& two) 
+//// AABB collision
+//bool CheckCollision(GameObject& one, GameObject& two) 
+//{
+//	bool collisionX = one.Position.x + one.Size.x >= two.Position.x
+//		&& two.Position.x + two.Position.x >= one.Position.x;
+//	bool collisionY = one.Position.y + one.Size.y >= two.Position.y
+//		&& two.Position.y + two.Size.y >= one.Position.y;
+//	return collisionX && collisionY;
+//}
+
+Direction VectorDirection(vec2 target) 
 {
-	bool collisionX = one.Position.x + one.Size.x >= two.Position.x
-		&& two.Position.x + two.Position.x >= one.Position.x;
-	bool collisionY = one.Position.y + one.Size.y >= two.Position.y
-		&& two.Position.y + two.Size.y >= one.Position.y;
-	return collisionX && collisionY;
+	vec2 compass[] =
+	{
+		vec2(0.0,1.0),
+		vec2(1.0,0.0),
+		vec2(0.0,-1.0),
+		vec2(-1.0,0.0)
+	};
+	float max = 0.0f;
+	unsigned int best_match = -1;
+	for (unsigned int i = 0; i < 4; i++) 
+	{
+		float dot_product = dot(normalize(target), compass[i]);
+		if (dot_product > max) 
+		{
+			max = dot_product;
+			best_match = i;
+		}
+	}
+	return (Direction)best_match;
 }
 
-bool CheckCollision(GameObject& one, BallObject& ball) 
+Collision CheckCollision(GameObject& one, BallObject& ball) 
 {
 	vec2 center(ball.Position + ball.Radius);
 	vec2 aabb_half_extents(one.Size.x / 2, one.Size.y / 2);
@@ -81,19 +114,59 @@ bool CheckCollision(GameObject& one, BallObject& ball)
 	vec2 clamped = clamp(difference, -aabb_half_extents, aabb_half_extents);
 	vec2 closet = aabb_center + clamped;
 	difference = closet - center;
-	return length(difference) < ball.Radius;
+	if (length(difference) <= ball.Radius)
+		return std::make_tuple(true, VectorDirection(difference), difference);
+	else
+		return std::make_tuple(false, UP, vec2(0.0, 0.0));
 }
 
 void Game::DoCollisions() 
 {
+	// check collision between bricks and ball 
 	for (GameObject& brick : this->Levels[this->Level].Bricks) 
 	{
 		if (!brick.Destroyed) 
 		{
-			if (CheckCollision(brick, *Ball))
+			Collision collision = CheckCollision(brick, *Ball);
+			if (std::get<0>(collision)) 
+			{
 				if (!brick.IsSolid)
 					brick.Destroyed = true;
+				Direction dir = std::get<1>(collision);
+				vec2 diff_vector = std::get<2>(collision);
+				if (dir == LEFT || dir == RIGHT) 
+				{
+					Ball->Velocity.x = -Ball->Velocity.x;
+					float penetration = Ball->Radius - std::abs(diff_vector.x);
+					if (dir == LEFT)
+						Ball->Position.x += penetration;
+					else
+						Ball->Position.x -= penetration;
+				}
+				else
+				{
+					Ball->Velocity.y = -Ball->Velocity.y;
+					float penetration = Ball->Radius - std::abs(diff_vector.y);
+					if (dir == DOWN)
+						Ball->Position.y += penetration;
+					else
+						Ball->Position.y -= penetration;
+				}
+			}
 		}
+	}
+	// check collision between ball and player paddle
+	Collision result = CheckCollision(*Player, *Ball);
+	if (!Ball->Stuck && std::get<0>(result)) 
+	{
+		float centerPaddle = Player->Position.x + Player->Size.x / 2;
+		float distance = (Ball->Position.x + Ball->Radius) - centerPaddle;
+		float percentage = distance / (Player->Size.x / 2);
+		float strengh = 2.0f;
+		vec2 oldVelocity = Ball->Velocity;
+		Ball->Velocity.x = BALL_VELOCITY.x * percentage * strengh;
+		Ball->Velocity.y = -Ball->Velocity.y;
+		Ball->Velocity = normalize(Ball->Velocity) * length(oldVelocity);
 	}
 }
 
@@ -133,6 +206,26 @@ void Game::Update(float deltaTime)
 {
 	Ball->Move(deltaTime, this->Width);
 	this->DoCollisions();
+	if (Ball->Position.y > this->Height) 
+	{
+		this->ResetPlayer();
+		this->ResetLevel();
+	}
+}
+
+void Game::ResetPlayer()
+{
+	vec2 playerPos = vec2(this->Width / 2.0f - PLAYER_SIZE.x / 2.0f,
+		this->Height - PLAYER_SIZE.y);
+	Player->Position = playerPos;
+	vec2 ballPos = playerPos + vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -BALL_RADIUS * 2.0f);
+	Ball->Position = ballPos;
+	Ball->Stuck = true;
+}
+
+void Game::ResetLevel() 
+{
+	this->Levels[this->Level].Reset();
 }
 
 void Game::Render()
