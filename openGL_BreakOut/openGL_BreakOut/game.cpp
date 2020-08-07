@@ -62,6 +62,41 @@ void Game::Init()
 	Ball = new BallObject(ballPos, BALL_RADIUS, BALL_VELOCITY, ResourceManager::GetTexture("awesomeface"));
 }
 
+bool CheckCollision(GameObject& one, GameObject& two) 
+{
+	bool collisionX = one.Position.x + one.Size.x >= two.Position.x
+		&& two.Position.x + two.Position.x >= one.Position.x;
+	bool collisionY = one.Position.y + one.Size.y >= two.Position.y
+		&& two.Position.y + two.Size.y >= one.Position.y;
+	return collisionX && collisionY;
+}
+
+bool CheckCollision(GameObject& one, BallObject& ball) 
+{
+	vec2 center(ball.Position + ball.Radius);
+	vec2 aabb_half_extents(one.Size.x / 2, one.Size.y / 2);
+	vec2 aabb_center(one.Position.x + aabb_half_extents.x,
+		one.Position.y + aabb_half_extents.y);
+	vec2 difference = center - aabb_center;
+	vec2 clamped = clamp(difference, -aabb_half_extents, aabb_half_extents);
+	vec2 closet = aabb_center + clamped;
+	difference = closet - center;
+	return length(difference) < ball.Radius;
+}
+
+void Game::DoCollisions() 
+{
+	for (GameObject& brick : this->Levels[this->Level].Bricks) 
+	{
+		if (!brick.Destroyed) 
+		{
+			if (CheckCollision(brick, *Ball))
+				if (!brick.IsSolid)
+					brick.Destroyed = true;
+		}
+	}
+}
+
 void Game::ProcessInput(float deltaTime)
 {
 	if (this->State == GAME_ACTIVE) {
@@ -97,6 +132,7 @@ void Game::ProcessInput(float deltaTime)
 void Game::Update(float deltaTime)
 {
 	Ball->Move(deltaTime, this->Width);
+	this->DoCollisions();
 }
 
 void Game::Render()

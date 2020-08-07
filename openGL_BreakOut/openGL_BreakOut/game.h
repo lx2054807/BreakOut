@@ -27,5 +27,6 @@ public:
 	void ProcessInput(float deltaTime);
 	void Update(float deltaTime);
 	void Render();
+	void DoCollisions();
 };
 #endif // !
