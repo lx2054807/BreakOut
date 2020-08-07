@@ -45,8 +45,8 @@ void Game::Init()
 	// load textures
 	ResourceManager::LoadTexture("awesomeface.png", true, "awesomeface");
 	ResourceManager::LoadTexture("background.jpg", false, "background");
-	ResourceManager::LoadTexture("block_solid.png", false, "block_solid");
-	ResourceManager::LoadTexture("block.png", false, "block");
+	ResourceManager::LoadTexture("goodpic.png", false, "block_solid");
+	ResourceManager::LoadTexture("goodpic.png", false, "block");
 	// load levels
 	GameLevel lv1;
 	lv1.Load("lv1.lvl", this->Width, this->Height / 2);
@@ -219,8 +219,7 @@ void Game::ResetPlayer()
 		this->Height - PLAYER_SIZE.y);
 	Player->Position = playerPos;
 	vec2 ballPos = playerPos + vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -BALL_RADIUS * 2.0f);
-	Ball->Position = ballPos;
-	Ball->Stuck = true;
+	Ball->Reset(ballPos, BALL_VELOCITY);
 }
 
 void Game::ResetLevel() 
