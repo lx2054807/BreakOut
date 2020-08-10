@@ -3,6 +3,7 @@
 #include "resource_manager.h"
 #include "ball.h"
 #include "gameobject.h"
+#include "particle_generator.h"
 SpriteRenderer *spriteRenderer;
 
 enum Direction
@@ -18,6 +19,7 @@ const vec2 PLAYER_SIZE(100.0f, 20.0f);
 const float PLAYER_VELOCITY(500.0f);
 GameObject *Player;
 BallObject *Ball;
+ParticleGenerator *Particles;
 
 const float BALL_RADIUS = 12.5f;
 const vec2 BALL_VELOCITY(100.0f, -300.0f);
@@ -30,6 +32,9 @@ Game::Game(unsigned int height, unsigned int width)
 Game::~Game()
 {
 	delete spriteRenderer;
+	delete Player;
+	delete Ball;
+	delete Particles;
 }
 
 void Game::Init()
@@ -42,11 +47,17 @@ void Game::Init()
 	Shader myShader;
 	myShader = ResourceManager::GetShader("sprite");
 	spriteRenderer = new SpriteRenderer(myShader);
+
+	ResourceManager::LoadShader("particle.vs", "particle.fs", nullptr, "particle");
+	ResourceManager::GetShader("particle").Use().SetInteger("sprite", 0);
+	ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
+	ResourceManager::LoadTexture("particle.png", true, "particle");
+	Particles = new ParticleGenerator(ResourceManager::GetShader("particle"), ResourceManager::GetTexture("particle"), 500);
 	// load textures
 	ResourceManager::LoadTexture("awesomeface.png", true, "awesomeface");
 	ResourceManager::LoadTexture("background.jpg", false, "background");
 	ResourceManager::LoadTexture("goodpic.png", false, "block_solid");
-	ResourceManager::LoadTexture("goodpic.png", false, "block");
+	ResourceManager::LoadTexture("greatpic.png", false, "block");
 	// load levels
 	GameLevel lv1;
 	lv1.Load("lv1.lvl", this->Width, this->Height / 2);
@@ -206,6 +217,7 @@ void Game::Update(float deltaTime)
 {
 	Ball->Move(deltaTime, this->Width);
 	this->DoCollisions();
+	Particles->Update(deltaTime, *Ball, 2, vec2(Ball->Radius / 2.0f));
 	if (Ball->Position.y > this->Height) 
 	{
 		this->ResetPlayer();
@@ -236,6 +248,7 @@ void Game::Render()
 			vec2(0.0f), vec2(this->Width, this->Height), 0.0f);
 		this->Levels[this->Level].Draw(*spriteRenderer);
 		Player->Draw(*spriteRenderer);
+		Particles->Draw();
 		Ball->Draw(*spriteRenderer);
 	}
 }								  
