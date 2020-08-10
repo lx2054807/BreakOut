@@ -39,7 +39,7 @@ Game::~Game()
 
 void Game::Init()
 {
-	// load shader
+	// load SpriteRenderer
 	ResourceManager::LoadShader("sprite.vs", "sprite.fs", nullptr, "sprite");
 	mat4 projection = ortho(0.0f, static_cast<float>(this->Width), static_cast<float>(this->Height), 0.0f, -1.0f, 1.0f);
 	ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
@@ -47,18 +47,18 @@ void Game::Init()
 	Shader myShader;
 	myShader = ResourceManager::GetShader("sprite");
 	spriteRenderer = new SpriteRenderer(myShader);
-
+	// load ParticleGenerator
 	ResourceManager::LoadShader("particle.vs", "particle.fs", nullptr, "particle");
 	ResourceManager::GetShader("particle").Use().SetInteger("sprite", 0);
 	ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
 	ResourceManager::LoadTexture("particle.png", true, "particle");
 	Particles = new ParticleGenerator(ResourceManager::GetShader("particle"), ResourceManager::GetTexture("particle"), 500);
-	// load textures
+	// load Textures
 	ResourceManager::LoadTexture("awesomeface.png", true, "awesomeface");
 	ResourceManager::LoadTexture("background.jpg", false, "background");
 	ResourceManager::LoadTexture("goodpic.png", false, "block_solid");
 	ResourceManager::LoadTexture("greatpic.png", false, "block");
-	// load levels
+	// load Levels
 	GameLevel lv1;
 	lv1.Load("lv1.lvl", this->Width, this->Height / 2);
 	GameLevel lv2;
@@ -72,12 +72,12 @@ void Game::Init()
 	this->Levels.push_back(lv3);
 	this->Levels.push_back(lv4);
 	this->Level = 0;
-	// load player
+	// init Player
 	ResourceManager::LoadTexture("paddle.png", true, "paddle");
 	vec2 playerPos = vec2(this->Width / 2.0f - PLAYER_SIZE.x / 2.0f,
 		this->Height - PLAYER_SIZE.y);
 	Player = new GameObject(playerPos, PLAYER_SIZE, ResourceManager::GetTexture("paddle"));
-	// init ball
+	// init Ball
 	vec2 ballPos = playerPos + vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -BALL_RADIUS * 2.0f);
 	Ball = new BallObject(ballPos, BALL_RADIUS, BALL_VELOCITY, ResourceManager::GetTexture("awesomeface"));
 }
@@ -92,6 +92,7 @@ void Game::Init()
 //	return collisionX && collisionY;
 //}
 
+// match direction for target
 Direction VectorDirection(vec2 target) 
 {
 	vec2 compass[] =
@@ -115,6 +116,7 @@ Direction VectorDirection(vec2 target)
 	return (Direction)best_match;
 }
 
+// check collision between ball and other gameobjects
 Collision CheckCollision(GameObject& one, BallObject& ball) 
 {
 	vec2 center(ball.Position + ball.Radius);
@@ -131,6 +133,7 @@ Collision CheckCollision(GameObject& one, BallObject& ball)
 		return std::make_tuple(false, UP, vec2(0.0, 0.0));
 }
 
+// change ball's direction and velocity after collision
 void Game::DoCollisions() 
 {
 	// check collision between bricks and ball 
