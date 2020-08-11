@@ -1,8 +1,8 @@
 #include "ball.h"
 
-BallObject::BallObject() :GameObject(), Radius(12.5f), Stuck(true){}
+BallObject::BallObject() :GameObject(), Radius(12.5f), Stuck(true), Sticky(false), PassThrough(false) {}
 
-BallObject::BallObject(vec2 pos, float radius, vec2 velocity, Texture2D texture) : GameObject(pos, vec2(radius * 2.0f, radius * 2.0f), texture, vec3(1.0f), velocity), Radius(radius), Stuck(true) {}
+BallObject::BallObject(vec2 pos, float radius, vec2 velocity, Texture2D texture) : GameObject(pos, vec2(radius * 2.0f, radius * 2.0f), texture, vec3(1.0f), velocity), Radius(radius), Stuck(true), Sticky(false), PassThrough(false) {}
 
 vec2 BallObject::Move(float deltaTime, unsigned int window_width) 
 {
@@ -33,4 +33,6 @@ void BallObject::Reset(vec2 pos, vec2 velocity)
 	this->Position = pos;
 	this->Velocity = velocity;
 	this->Stuck = true;
+	this->Sticky = false;
+	this->PassThrough = false;
 }

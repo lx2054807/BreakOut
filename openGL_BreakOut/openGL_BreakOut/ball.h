@@ -11,6 +11,8 @@ class  BallObject:public GameObject
 public:
 	float Radius;
 	bool Stuck;
+	bool Sticky;
+	bool PassThrough;
 	BallObject();
 	BallObject(vec2 pos, float radius, vec2 velocity, Texture2D texture);
 

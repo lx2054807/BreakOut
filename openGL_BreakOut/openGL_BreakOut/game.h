@@ -2,7 +2,7 @@
 #define GAME_H
 #include <vector>
 #include "gamelevel.h"
-
+#include "powerup.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -19,6 +19,7 @@ public:
 	GameState State;
 	bool Keys[1024];
 	std::vector<GameLevel> Levels;
+	std::vector<PowerUp> PowerUps;
 	unsigned int Level;
 	unsigned int Height, Width;
 	Game(unsigned int height, unsigned int width);
@@ -30,5 +31,7 @@ public:
 	void DoCollisions();
 	void ResetPlayer();
 	void ResetLevel();
+	void SpawnPowerUps(GameObject& block);
+	void UpdatePowerUps(float deltaTime);
 };
 #endif // !
