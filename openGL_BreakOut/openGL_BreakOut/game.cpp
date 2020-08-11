@@ -4,6 +4,7 @@
 #include "ball.h"
 #include "gameobject.h"
 #include "particle_generator.h"
+#include "post_processor.h"
 SpriteRenderer *spriteRenderer;
 
 enum Direction
@@ -20,6 +21,7 @@ const float PLAYER_VELOCITY(500.0f);
 GameObject *Player;
 BallObject *Ball;
 ParticleGenerator *Particles;
+PostProcessor* PostProcessing;
 
 const float BALL_RADIUS = 12.5f;
 const vec2 BALL_VELOCITY(100.0f, -300.0f);
@@ -53,6 +55,9 @@ void Game::Init()
 	ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
 	ResourceManager::LoadTexture("particle.png", true, "particle");
 	Particles = new ParticleGenerator(ResourceManager::GetShader("particle"), ResourceManager::GetTexture("particle"), 500);
+	// load PostProcessor
+	ResourceManager::LoadShader("postprocessing.vs", "postprocessing.fs", nullptr, "postprocess");
+	PostProcessing = new PostProcessor(ResourceManager::GetShader("postprocess"), this->Width, this->Height);
 	// load Textures
 	ResourceManager::LoadTexture("awesomeface.png", true, "awesomeface");
 	ResourceManager::LoadTexture("background.jpg", false, "background");
@@ -133,6 +138,7 @@ Collision CheckCollision(GameObject& one, BallObject& ball)
 		return std::make_tuple(false, UP, vec2(0.0, 0.0));
 }
 
+float shakeTime = 0.0f;
 // change ball's direction and velocity after collision
 void Game::DoCollisions() 
 {
@@ -146,6 +152,12 @@ void Game::DoCollisions()
 			{
 				if (!brick.IsSolid)
 					brick.Destroyed = true;
+				else
+				{
+					PostProcessing->Shake = true;
+					shakeTime = 0.5f;
+				}
+					
 				Direction dir = std::get<1>(collision);
 				vec2 diff_vector = std::get<2>(collision);
 				if (dir == LEFT || dir == RIGHT) 
@@ -226,6 +238,12 @@ void Game::Update(float deltaTime)
 		this->ResetPlayer();
 		this->ResetLevel();
 	}
+	if (shakeTime > 0.0f)
+	{
+		shakeTime -= deltaTime;
+		if (shakeTime <= 0.0f)
+			PostProcessing->Shake = false;
+	}
 }
 
 void Game::ResetPlayer()
@@ -245,6 +263,7 @@ void Game::ResetLevel()
 void Game::Render()
 {
 	if (this->State == GAME_ACTIVE) {
+		PostProcessing->BeginRender();
 		Texture2D myTexture;
 		myTexture = ResourceManager::GetTexture("background");
 		spriteRenderer->DrawSprite(myTexture,
@@ -253,6 +272,8 @@ void Game::Render()
 		Player->Draw(*spriteRenderer);
 		Particles->Draw();
 		Ball->Draw(*spriteRenderer);
+		PostProcessing->EndRender();
+		PostProcessing->Render(glfwGetTime());
 	}
 }								  
 														  
