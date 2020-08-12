@@ -79,14 +79,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		glfwSetWindowShouldClose(window, true);
 	}
 
-	if (key == GLFW_KEY_ENTER) 
-	{
-		if (action == GLFW_PRESS && BreakOut.State == GAME_MENU)
-			BreakOut.State = GAME_ACTIVE;
-		else if (action == GLFW_PRESS && BreakOut.State == GAME_ACTIVE)
-			BreakOut.State = GAME_MENU;
-	}
-
 	if (key >= 0 && key < 1024) 
 	{
 		if (action == GLFW_PRESS) 
@@ -96,6 +88,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		if (action == GLFW_RELEASE) 
 		{
 			BreakOut.Keys[key] = false;
+			BreakOut.KeysProcessed[key] = false;
 		}
 	}
 }

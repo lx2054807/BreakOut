@@ -7,6 +7,9 @@
 #include "post_processor.h"
 #include "powerup.h"
 #include <algorithm>
+#include "text_renderer.h"
+#include <sstream>
+
 SpriteRenderer *spriteRenderer;
 
 enum Direction
@@ -24,12 +27,13 @@ GameObject *Player;
 BallObject *Ball;
 ParticleGenerator *Particles;
 PostProcessor* PostProcessing;
+TextRenderer* Text;
 
 const float BALL_RADIUS = 12.5f;
 const vec2 BALL_VELOCITY(100.0f, -300.0f);
 
 Game::Game(unsigned int height, unsigned int width)
-	:State(GAME_ACTIVE), Keys(), Width(width), Height(height)
+	:State(GAME_ACTIVE), Keys(), KeysProcessed(),Width(width), Height(height), Lives(3)
 {
 }
 
@@ -40,6 +44,7 @@ Game::~Game()
 	delete Ball;
 	delete Particles;
 	delete PostProcessing;
+	delete Text;
 }
 
 void Game::Init()
@@ -77,11 +82,11 @@ void Game::Init()
 	GameLevel lv1;
 	lv1.Load("lv1.lvl", this->Width, this->Height / 2);
 	GameLevel lv2;
-	lv1.Load("lv2.lvl", this->Width, this->Height / 2);
+	lv2.Load("lv2.lvl", this->Width, this->Height / 2);
 	GameLevel lv3;
-	lv1.Load("lv3.lvl", this->Width, this->Height / 2);
+	lv3.Load("lv3.lvl", this->Width, this->Height / 2);
 	GameLevel lv4;
-	lv1.Load("lv4.lvl", this->Width, this->Height / 2);
+	lv4.Load("lv4.lvl", this->Width, this->Height / 2);
 	this->Levels.push_back(lv1);
 	this->Levels.push_back(lv2);
 	this->Levels.push_back(lv3);
@@ -95,6 +100,9 @@ void Game::Init()
 	// init Ball
 	vec2 ballPos = playerPos + vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -BALL_RADIUS * 2.0f);
 	Ball = new BallObject(ballPos, BALL_RADIUS, BALL_VELOCITY, ResourceManager::GetTexture("awesomeface"));
+	// load Text
+	Text = new TextRenderer(this->Width, this->Height);
+	Text->Load("OCRAEXT.TTF", 24);
 }
 
 //// AABB collision
@@ -378,32 +386,92 @@ void Game::ProcessInput(float deltaTime)
 				}
 			}
 		}
-		if (this->Keys[GLFW_KEY_SPACE])
-
+		if (this->Keys[GLFW_KEY_SPACE] && !this->KeysProcessed[GLFW_KEY_SPACE]) 
+		{
 			Ball->Stuck = false;
-		if (this->Keys[GLFW_KEY_P])
+			this->KeysProcessed[GLFW_KEY_SPACE] = true;
+		}
+		if (this->Keys[GLFW_KEY_P] && !this->KeysProcessed[GLFW_KEY_P])
+		{
 			PostProcessing->Chaos = !PostProcessing->Chaos;
-		if (this->Keys[GLFW_KEY_O])
+			this->KeysProcessed[GLFW_KEY_P] = true;
+		}
+		if (this->Keys[GLFW_KEY_O] &&! this->KeysProcessed[GLFW_KEY_O])
+		{
 			PostProcessing->Confuse = !PostProcessing->Confuse;
+			this->KeysProcessed[GLFW_KEY_O] = true;
+		}
 	}
+
+	if (this->State == GAME_MENU) 
+	{
+		if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
+		{
+			this->State = GAME_ACTIVE;
+			this->KeysProcessed[GLFW_KEY_ENTER] = true;
+		}
+		if (this->Keys[GLFW_KEY_W] && !this->KeysProcessed[GLFW_KEY_W])
+		{
+			this->Level = (this->Level + 1) % 4;
+			this->KeysProcessed[GLFW_KEY_W] = true;
+		}
+		if (this->Keys[GLFW_KEY_S] && !this->KeysProcessed[GLFW_KEY_S])
+		{
+			this->Level = (this->Level > 0 ? this->Level - 1 : 3);
+			this->KeysProcessed[GLFW_KEY_S] = true;
+		}
+	}
+
+	if (this->State == GAME_WIN) 
+	{
+		if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
+		{
+			this->ResetLevel();
+			this->ResetPlayer();
+			this->State = GAME_MENU;
+			this->KeysProcessed[GLFW_KEY_ENTER] = true;
+		}
+	}
+}
+
+bool Game::IsCompleted() 
+{
+	for (GameObject& brick : this->Levels[this->Level].Bricks) 
+	{
+		if (!brick.Destroyed && !brick.IsSolid)
+			return false;
+	}
+	return true;
 }
 
 void Game::Update(float deltaTime)
 {
-	Ball->Move(deltaTime, this->Width);
-	this->DoCollisions();
-	this->UpdatePowerUps(deltaTime);
-	Particles->Update(deltaTime, *Ball, 2, vec2(Ball->Radius / 2.0f));
-	if (Ball->Position.y > this->Height) 
-	{
-		this->ResetPlayer();
-		this->ResetLevel();
-	}
-	if (shakeTime > 0.0f)
-	{
-		shakeTime -= deltaTime;
-		if (shakeTime <= 0.0f)
-			PostProcessing->Shake = false;
+	if (this->State == GAME_ACTIVE) {
+		Ball->Move(deltaTime, this->Width);
+		this->DoCollisions();
+		this->UpdatePowerUps(deltaTime);
+		Particles->Update(deltaTime, *Ball, 2, vec2(Ball->Radius / 2.0f));
+		if (Ball->Position.y > this->Height)
+		{
+			this->Lives--;
+			this->ResetPlayer();
+			if (this->Lives == 0)
+			{
+				this->ResetLevel();
+				this->State = GAME_MENU;
+			}
+		}
+		if (shakeTime > 0.0f)
+		{
+			shakeTime -= deltaTime;
+			if (shakeTime <= 0.0f)
+				PostProcessing->Shake = false;
+		}
+		if (this->Levels[this->Level].IsCompleted())
+		{
+			this->State = GAME_WIN;
+			PostProcessing->Chaos = PostProcessing->Confuse = false;
+		}
 	}
 }
 
@@ -422,11 +490,13 @@ void Game::ResetPlayer()
 void Game::ResetLevel() 
 {
 	this->Levels[this->Level].Reset();
+	this->Lives = 3;
 }
 
 void Game::Render()
 {
-	if (this->State == GAME_ACTIVE) {
+	if (this->State == GAME_ACTIVE || this->State == GAME_MENU)
+	{
 		PostProcessing->BeginRender();
 		Texture2D myTexture;
 		myTexture = ResourceManager::GetTexture("background");
@@ -441,9 +511,21 @@ void Game::Render()
 		}
 		Particles->Draw();
 		Ball->Draw(*spriteRenderer);
+		std::stringstream ss; ss<< this->Lives;
+		Text->RenderText("Lives:" + ss.str(), 5.0f, 5.0f, 1.0f);
 		PostProcessing->EndRender();
 		PostProcessing->Render(glfwGetTime());
 		
+	}
+	if (this->State == GAME_MENU) 
+	{
+		Text->RenderText("Press Enter to Start", 220.0f, this->Height / 2, 1.1f);
+		Text->RenderText("Press W or S to Select Level", 200.0f, this->Height / 2 + 30.0f, 1.0f);
+	}
+	if (this->State == GAME_WIN) 
+	{
+		Text->RenderText("Congratulation!! You Win!!", 180, this->Height / 2 - 30, 1.2f, vec3(0.0, 1.0f, 0.0));
+		Text->RenderText("Press Enter to Continue or Press ESC to Quit", 80, this->Height / 2, 1.0f);
 	}
 }								  
 														  
