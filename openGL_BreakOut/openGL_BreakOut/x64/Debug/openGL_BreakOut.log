@@ -1,3 +1,0 @@
-﻿  glad.c
-LINK : warning LNK4098: 默认库“MSVCRT”与其他库的使用冲突；请使用 /NODEFAULTLIB:library
-  openGL_BreakOut.vcxproj -> D:\BreakOut\openGL_BreakOut\x64\Debug\openGL_BreakOut.exe
