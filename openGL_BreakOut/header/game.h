@@ -18,8 +18,10 @@ class Game
 public:
 	GameState State;
 	bool Keys[1024];
+	bool KeysProcessed[1024];
 	std::vector<GameLevel> Levels;
 	std::vector<PowerUp> PowerUps;
+	unsigned int Lives;
 	unsigned int Level;
 	unsigned int Height, Width;
 	Game(unsigned int height, unsigned int width);
@@ -33,5 +35,6 @@ public:
 	void ResetLevel();
 	void SpawnPowerUps(GameObject& block);
 	void UpdatePowerUps(float deltaTime);
+	bool IsCompleted();
 };
 #endif // !
